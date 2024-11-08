@@ -17,10 +17,30 @@ class MountDetector:
     def __init__(self, debug_mode: bool = False):
         self.debug_mode = debug_mode
         # Constants tuned for vintage slide mounts
-        self.THRESHOLD_VALUE = 200  # Higher threshold for light colored mounts
-        self.MIN_WINDOW_RATIO = 0.1  # Minimum window size relative to image width
-        self.MAX_WINDOW_RATIO = 0.4  # Maximum window size relative to image width
-        self.ASPECT_RATIO_TOL = 0.1  # Tolerance for square aspect ratio
+        self.THRESHOLD_VALUE = 200
+        self.MIN_WINDOW_RATIO = 0.1
+        self.MAX_WINDOW_RATIO = 0.4
+        self.ASPECT_RATIO_TOL = 0.1
+        # Staple removal settings
+        self.STAPLE_MARGIN = 15  # Pixels to crop from edges to remove staples
+
+    def remove_staples(self, window_image: np.ndarray) -> np.ndarray:
+        """
+        Remove staple marks by cropping edges of the window.
+        
+        Args:
+            window_image: Extracted window image
+            
+        Returns:
+            np.ndarray: Cleaned window image with staples removed
+        """
+        h, w = window_image.shape[:2]
+        margin = self.STAPLE_MARGIN
+        
+        # Crop out the staple areas
+        cleaned = window_image[margin:h-margin, margin:w-margin]
+        
+        return cleaned
 
     def detect_windows(self, image: np.ndarray) -> List[Window]:
         """
@@ -74,18 +94,22 @@ class MountDetector:
                 min_window_size < h < max_window_size and  # Height in range
                 aspect_ratio_error < self.ASPECT_RATIO_TOL):  # Nearly square
                 
-                # Refine the window boundaries
-                # Add small margin to ensure we get the full window
-                margin = 2
-                x_refined = max(0, x - margin)
-                y_refined = max(0, y - margin)
-                w_refined = min(img_width - x_refined, w + 2*margin)
-                h_refined = min(img_height - y_refined, h + 2*margin)
+                # Extract window image
+                window_image = image[y:y+h, x:x+w]
                 
-                window_image = image[y_refined:y_refined+h_refined, 
-                                   x_refined:x_refined+w_refined]
-                windows.append(Window(x_refined, y_refined, w_refined, h_refined, 
-                                   window_image))
+                # Remove staples
+                cleaned_image = self.remove_staples(window_image)
+                
+                # Update dimensions after staple removal
+                h_cleaned, w_cleaned = cleaned_image.shape[:2]
+                
+                windows.append(Window(
+                    x + self.STAPLE_MARGIN,  # Adjust coordinates for cropped margins
+                    y + self.STAPLE_MARGIN,
+                    w_cleaned,
+                    h_cleaned,
+                    cleaned_image
+                ))
         
         # Sort windows left to right
         windows.sort(key=lambda w: w.x)
