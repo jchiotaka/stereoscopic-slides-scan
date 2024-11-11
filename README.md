@@ -19,10 +19,7 @@ Convert vintage stereoscopic slides into VR-ready format for viewing in VR heads
 ## Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/stereo-vr-converter.git
-cd stereo-vr-converter
-```
+
 
 2. Install requirements:
 ```bash
