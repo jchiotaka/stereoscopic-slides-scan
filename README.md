@@ -2,7 +2,7 @@
 
 Convert vintage stereoscopic slides into VR-ready format for viewing in VR headsets like Oculus. This tool automatically detects stereo pairs from mounted slides, processes them, and prepares them for VR viewing.
 
-![Example Conversion](docs/example.jpg)
+![Example Input](input.jpeg)
 
 ## Features
 
